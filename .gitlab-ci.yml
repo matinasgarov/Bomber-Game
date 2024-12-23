@@ -1,0 +1,49 @@
+stages:
+  - build
+  - lint
+  - test
+  - deploy
+
+build-job:
+  stage: build
+  image: python:3.12
+  before_script:
+    - python -m pip install --upgrade pip
+  script:
+    - echo "Installing dependencies..."
+    - pip install pygame pygame-menu pytest pylint
+    - echo "Dependencies installed."
+
+lint-job:
+  stage: lint
+  image: python:3.12
+  before_script:
+    - python -m pip install --upgrade pip
+    - pip install pylint
+  script:
+    - echo "Linting code..."
+    - PYTHONPATH=$PYTHONPATH:$(pwd) pylint game.py player.py bomb.py
+  allow_failure: true
+
+unit-test-job:
+  stage: test
+  image: python:3.12
+  before_script:
+    - python -m pip install --upgrade pip
+    - pip install pygame pygame-menu pytest
+  script:
+    - echo "Running unit tests..."
+    - PYTHONPATH=$PYTHONPATH:$(pwd) pytest --junitxml=junit-report.xml
+  artifacts:
+    reports:
+      junit: junit-report.xml
+    paths:
+      - pytest-coverage.txt
+  coverage:
+    '/^TOTAL.+?(\d+%)$/'
+
+deploy-job:
+  stage: deploy
+  script:
+    - echo "Deploying application..."
+    - echo "Application successfully deployed."
